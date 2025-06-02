@@ -1,1 +1,6 @@
-# Global config settings
+data:
+  metadata: data/annotations/metadata.csv
+  tracings: data/annotations/tracings.csv
+  raw: data/raw
+  processed: data/processed
+  echonet: data/echonet
