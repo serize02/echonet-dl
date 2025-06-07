@@ -4,3 +4,10 @@ data:
   raw: data/raw
   processed: data/processed
   echonet: data/echonet
+
+wandb:
+  datasets:
+    images-masks: 'ernestoserize-constructor-university/echonet-dl/images-masks:v0'
+  models:
+    unet: 'ernestoserize-constructor-university/echonet-dl/unet:v0''
+
