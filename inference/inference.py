@@ -18,6 +18,22 @@ from tqdm import tqdm
 
 from models.unet.unet import UNet
 
+import requests
+
+def send(filename, true_ef, predicted_ef):
+    url = "http://localhost:8080/predict"
+    data = {
+        "filename": filename,
+        "true_ef": float(true_ef),
+        "predicted_ef": float(predicted_ef)
+    }
+    try:
+        response = requests.post(url, json=data)
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to send {filename}: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"[EXCEPTION] Could not connect to server: {e}")
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -120,9 +136,15 @@ if __name__ == '__main__':
     y_trues = meta['EF'].values
     y_preds = []
 
-    for file in tqdm(meta['FileName']):
-        ef, _ = estimate_ef(os.path.join('data/echonet', file + '.avi'))
-        y_preds.append(ef)
+    for _, row in tqdm(meta.iterrows(), total=len(meta)):
+        file = row['FileName']
+        true_ef = row['EF']
+        video_path = os.path.join('data/echonet', file + '.avi')
 
-    print(mae(y_trues, y_preds))
+        predicted_ef, _ = estimate_ef(video_path)
+        y_preds.append(predicted_ef)
+
+        send(file, true_ef, predicted_ef)
+
+    print(f"MAE: {mae(y_trues, y_preds):.2f}")
 
