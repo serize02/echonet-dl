@@ -9,5 +9,4 @@ wandb:
   datasets:
     images-masks: 'ernestoserize-constructor-university/echonet-dl/images-masks:v0'
   models:
-    unet: 'ernestoserize-constructor-university/echonet-dl/unet:v0''
-
+    unet: 'ernestoserize-constructor-university/echonet-dl/unet:v0'
