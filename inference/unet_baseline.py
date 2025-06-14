@@ -20,12 +20,13 @@ from models.unet.unet import UNet
 
 import requests
 
-def send(filename, true_ef, predicted_ef):
+def send(filename, true_ef, predicted_ef, model='UNet-baseline'):
     url = "http://localhost:8080/predict"
     data = {
         "filename": filename,
         "true_ef": float(true_ef),
-        "predicted_ef": float(predicted_ef)
+        "predicted_ef": float(predicted_ef),
+        "model_name": model
     }
     try:
         response = requests.post(url, json=data)
@@ -33,19 +34,6 @@ def send(filename, true_ef, predicted_ef):
             print(f"[ERROR] Failed to send {filename}: {response.text}")
     except requests.exceptions.RequestException as e:
         print(f"[EXCEPTION] Could not connect to server: {e}")
-
-import warnings
-warnings.filterwarnings('ignore')
-
-# download W&B artifact
-
-# import wandb
-# wandb.login()
-
-# run = wandb.init(project='echonet-dl')
-# artifact = run.use_artifact('ernestoserize-constructor-university/echonet-dl/unet:v0', type='model')
-# artifact_dir = artifact.download()
-# wandb.finish()
 
 INPUT_CHANNELS = 1
 OUTPUT_CHANNELS = 1
