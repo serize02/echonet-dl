@@ -1,13 +1,4 @@
-## 🔬 Key Concepts
-
-- **Left Ventricle Segmentation**: Accurate identification of the LV in echocardiograms is crucial for cardiac function assessment.
-- **UNet Architecture**: A baseline encoder–decoder model for biomedical image segmentation.
-- **Pretrained Encoders**: Incorporating backbones like **ResNet50** to enhance feature extraction within the UNet framework.
-- **Evaluation Metrics**:
-  - **Dice Coefficient** and **IoU** for spatial overlap.
-  - **Precision** and **Recall** to understand model behavior in terms of false positives and false negatives.
-
-## 📓 Notebooks
+## Notebooks
 
 - **Exploratory Data Analysis**: Understand the dataset characteristics and visualize sample frames.  
   [Open in Colab](https://colab.research.google.com/drive/1EQGr7LMHNdov_Vxuk5V9x-JSpUDJwdkm#scrollTo=iowHamIZnI-2)
