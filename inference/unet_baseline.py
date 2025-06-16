@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 import torch
+import numpy as np
 
 from sklearn.metrics import mean_absolute_error as mae
 from tqdm import tqdm
@@ -32,17 +33,23 @@ if __name__ == '__main__':
     meta, y_trues = get_meta_test()
     
     y_preds = []
+    flow_divergence = []
+    dices = []
 
     for _, row in tqdm(meta.iterrows(), total=len(meta)):
         
         file = row['FileName']
         true_ef = row['EF']
         video_path = os.path.join('data/echonet', file + '.avi')
-        areas, lengths = fbf_prediction(model, device, video_path)
-        predicted_ef  = estimate_ef(areas, lengths)
+        areas, lengths, flow_, dice_ = fbf_prediction(model, device, video_path)
+        flow_divergence.append(flow_)
+        dices.append(dice_)
+        predicted_ef = estimate_ef(areas, lengths)
         y_preds.append(predicted_ef)
 
-        send(file, true_ef, predicted_ef, MODEL_NAME)
+        send(file, true_ef, predicted_ef, dice_, flow_, MODEL_NAME)
 
-    print(f"MAE: {mae(y_trues, y_preds):.2f}")
+    print(f"MAE: {mae(y_trues, y_preds)}")
+    print(f"Mean Flow Stability: {np.mean(flow_divergence)}")
+    print(f"Mean Dice Stability: {np.mean(dices)}")
 

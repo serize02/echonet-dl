@@ -20,6 +20,8 @@ func Migrate(db *sql.DB) error {
 		meta_id INTEGER NOT NULL,
 		model_id INTEGER NOT NULL,
 		predicted_ef REAL NOT NULL,
+		dice_stability REAL NOT NULL,
+		flow_divergence REAL NOT NULL,
 		FOREIGN KEY (meta_id) REFERENCES meta(id),
 		FOREIGN KEY (model_id) REFERENCES models(id),
 		UNIQUE (meta_id, model_id)

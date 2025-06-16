@@ -9,4 +9,3 @@
 
 - **ResNet50-UNet**: A UNet model using a **ResNet50** encoder pretrained on ImageNet, compared for improved segmentation quality.  
   [Open in Colab](https://colab.research.google.com/drive/1YvaR7KLMvMowcxsjpiWhKF3xVVUjL8P9?usp=share_link)
-
