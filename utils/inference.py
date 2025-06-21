@@ -13,10 +13,12 @@ image_transforms = transforms.Compose([
     transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 
-def get_meta_test():
+def get_meta(split=None):
     
     meta = pd.read_csv('data/annotations/metadata.csv')
-    meta = meta[meta['Split'] == 'TEST']
+    
+    if split is not None:
+        meta = meta[meta['Split'] == split]
 
     meta = meta[meta.apply(
         lambda x: os.path.exists(os.path.join('data/echonet', x['FileName'] + '.avi')),

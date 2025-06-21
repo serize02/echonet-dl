@@ -197,3 +197,4 @@ data/*
 wandb/*
 artifacts/*
 xai-db/inference.db
+logs/*
