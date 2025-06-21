@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     logger.info('model successfully loaded.')
 
-    data = get_meta(split='TEST')
+    data = get_meta()
 
     runner = InferenceRunner(model, device, data, MODEL_NAME)
     runner.run()

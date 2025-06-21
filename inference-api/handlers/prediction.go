@@ -8,11 +8,11 @@ import (
 	"inference-api/models"
 )
 
-func getOrInsertMeta(db *sql.DB, filename string, trueEF float64) (int, error) {
+func getOrInsertMeta(db *sql.DB, filename string, split string, trueEF float64) (int, error) {
 	var id int
 	err := db.QueryRow(`SELECT id FROM meta WHERE filename = ?`, filename).Scan(&id)
 	if err == sql.ErrNoRows {
-		res, err := db.Exec(`INSERT INTO meta (filename, true_ef) VALUES (?, ?)`, filename, trueEF)
+		res, err := db.Exec(`INSERT INTO meta (filename, split, true_ef) VALUES (?, ?, ?)`, filename, split, trueEF)
 		if err != nil {
 			return 0, err
 		}
@@ -46,7 +46,7 @@ func PostPrediction(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		metaID, err := getOrInsertMeta(db, req.Filename, req.TrueEF)
+		metaID, err := getOrInsertMeta(db, req.Filename, req.Split, req.TrueEF)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process meta", "details": err.Error()})
 			return

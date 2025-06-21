@@ -9,6 +9,7 @@ func Migrate(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS meta (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		filename TEXT NOT NULL UNIQUE,
+		split TEST NOT NULL,
 		true_ef REAL NOT NULL
 	);
 	CREATE TABLE IF NOT EXISTS models (

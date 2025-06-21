@@ -37,7 +37,9 @@ class InferenceRunner:
         with tqdm(total=len(meta)) as pbar:
             
             for _, row in meta.iterrows():
+                
                 file = row['FileName']
+                split = row['Split']
                 true_ef = row['EF']
 
                 pbar.set_description(f"{file}.avi | True EF: {true_ef:.1f}")
@@ -52,7 +54,7 @@ class InferenceRunner:
                 predicted_ef = estimate_ef(areas, lengths)
                 y_preds.append(predicted_ef)
 
-                send(file, true_ef, predicted_ef, dice_, flow_, self.model_name)
+                send(file, split, true_ef, predicted_ef, dice_, flow_, self.model_name)
 
                 pbar.update(1)
 
