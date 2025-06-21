@@ -1,10 +1,11 @@
 import requests
 
-def send(filename, true_ef, predicted_ef, dice_stability, flow_divergence, model_name):
+def send(filename, split, true_ef, predicted_ef, dice_stability, flow_divergence, model_name):
     url = "http://localhost:8080/predict"
     
     data = {
         "filename": filename,
+        "split": split, 
         "true_ef": float(true_ef),
         "predicted_ef": float(predicted_ef),
         "dice_stability": float(dice_stability),
