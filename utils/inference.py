@@ -6,6 +6,7 @@ import torch
 import pandas as pd
 import numpy as np
 from torchvision import transforms
+from scipy.spatial.distance import pdist
 
 image_transforms = transforms.Compose([
     transforms.ToTensor(),
@@ -22,23 +23,20 @@ def get_meta_test():
         axis=1
     )]
 
-    y_trues = meta['EF'].values
-
-    return meta, y_trues
+    return meta
 
 
 def estimate_L(mask: np.ndarray) -> float:
     
     if np.sum(mask) == 0:
         return 0.0
-    
-    rows = np.where(np.any(mask == 1, axis=1))[0]
-    row_base = rows[0]
-    row_apex = rows[-1]
-    
-    return (row_apex - row_base)
 
-def navier_stokes_flow_stability(masks, pixel_spacing=0.1):
+    coords = np.column_stack(np.where(mask == 1))
+    max_distance = np.max(pdist(coords, metric='euclidean'))
+
+    return float(max_distance)
+
+def navier_stokes_flow_divergence(masks, pixel_spacing=0.1):
     
     divergence_scores = []
     prev = None
@@ -68,7 +66,7 @@ def navier_stokes_flow_stability(masks, pixel_spacing=0.1):
     return np.mean(divergence_scores) if divergence_scores else 0.0
 
 
-def temporal_dice_stability(masks):
+def dice_stability(masks):
     dice_scores = []
     prev = None
     for curr in masks:
@@ -111,7 +109,7 @@ def fbf_prediction(model, device, video_path, pixel_spacing=0.1, max_frames=100)
 
         cap.release()
 
-    return areas, lengths, navier_stokes_flow_stability(masks), temporal_dice_stability(masks)
+    return areas, lengths, navier_stokes_flow_divergence(masks), dice_stability(masks)
     
 
 def estimate_ef(areas, lengths, pixel_spacing=0.1):
