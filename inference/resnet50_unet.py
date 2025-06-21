@@ -8,7 +8,7 @@ import torch
 
 import segmentation_models_pytorch as smp
 
-from utils.inference import get_meta_test
+from utils.inference import get_meta
 
 from inference.runner import InferenceRunner
 from inference import logger
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     logger.info('model successfully loaded.')
 
-    data = get_meta_test()
+    data = get_meta(split='TEST')
 
     runner = InferenceRunner(model, device, data, MODEL_NAME)
     runner.run()
