@@ -38,12 +38,16 @@ def estimate_L(mask: np.ndarray) -> float:
 
     return float(max_distance)
 
-def navier_stokes_flow_divergence(masks, pixel_spacing=0.1):
-    
+
+def flow_stats(masks, pixel_spacing=0.1):
     divergence_scores = []
+    magnitudes = []
+    dice_scores = []
+
     prev = None
     for curr in masks:
         if prev is not None:
+            lv_region = curr > 0
 
             flow = cv2.calcOpticalFlowFarneback(
                 prev.astype(np.uint8) * 255,
@@ -54,30 +58,65 @@ def navier_stokes_flow_divergence(masks, pixel_spacing=0.1):
             vx = flow[..., 0] * pixel_spacing
             vy = flow[..., 1] * pixel_spacing
 
+            mag = np.sqrt(vx**2 + vy**2)
+            magnitudes.append(mag[lv_region])
+
             dx = cv2.Sobel(vx, cv2.CV_64F, 1, 0, ksize=5)
             dy = cv2.Sobel(vy, cv2.CV_64F, 0, 1, ksize=5)
-
             divergence = dx + dy
-
-            mask_region = curr > 0
-            avg_divergence = np.mean(np.abs(divergence[mask_region]))
-
+            avg_divergence = np.mean(np.abs(divergence[lv_region]))
             divergence_scores.append(avg_divergence)
-        prev = curr
 
-    return np.mean(divergence_scores) if divergence_scores else 0.0
-
-
-def dice_stability(masks):
-    dice_scores = []
-    prev = None
-    for curr in masks:
-        if prev is not None:
             intersection = np.logical_and(prev, curr).sum()
             dice = (2.0 * intersection) / (prev.sum() + curr.sum() + 1e-5)
             dice_scores.append(dice)
+
         prev = curr
-    return np.mean(dice_scores) if dice_scores else 0.0
+
+    # Flatten all magnitudes
+    mags = np.concatenate(magnitudes) if magnitudes else np.array([])
+
+    if mags.size > 0:
+        mean_mag = float(np.mean(mags))
+        var_mag = float(np.var(mags))
+        std_mag = float(np.std(mags))
+        max_mag = float(np.max(mags))
+    else:
+        mean_mag = var_mag = std_mag = max_mag = 0.0
+
+    if len(divergence_scores) > 0:
+        mean_div = float(np.mean(divergence_scores))
+        var_div = float(np.var(divergence_scores))
+        std_div = float(np.std(divergence_scores))
+        max_div = float(np.max(divergence_scores))
+    else:
+        mean_div = var_div = std_div = max_div = 0.0
+
+    if len(dice_scores) > 0:
+        mean_dice = float(np.mean(dice_scores))
+        var_dice = float(np.var(dice_scores))
+        std_dice = float(np.std(dice_scores))
+        min_dice = float(np.min(dice_scores))
+    else:
+        mean_dice = var_dice = std_dice = min_dice = 0.0
+
+    stats = {
+        'mean_magnitude': mean_mag,
+        'var_magnitude': var_mag,
+        'std_magnitude': std_mag,
+        'max_magnitude': max_mag,
+        'mean_divergence': mean_div,
+        'var_divergence': var_div,
+        'std_divergence': std_div,
+        'max_divergence': max_div,
+        'mean_dice': mean_dice,
+        'var_dice': var_dice,
+        'std_dice': std_dice,
+        'min_dice': min_dice,
+    }
+
+    return stats
+
 
 
 def fbf_prediction(model, device, video_path, pixel_spacing=0.1, max_frames=100):
@@ -111,10 +150,12 @@ def fbf_prediction(model, device, video_path, pixel_spacing=0.1, max_frames=100)
 
         cap.release()
 
-    return areas, lengths, navier_stokes_flow_divergence(masks), dice_stability(masks)
+    return areas, lengths, flow_stats(masks)
     
 
-def estimate_ef(areas, lengths, pixel_spacing=0.1):
+def estimate_ef(model, device, video_path, pixel_spacing=0.1):
+    
+    areas, lengths, flow_stats = fbf_prediction(model, device, video_path)
 
     volumes = []
 
@@ -124,8 +165,26 @@ def estimate_ef(areas, lengths, pixel_spacing=0.1):
         volume = area_cm2 * length_cm
         volumes.append(volume)
 
-    edv = max(volumes)
-    esv = min(volumes)
-    ef = ((edv - esv) / edv) * 100
+    volumes = np.array(volumes)
 
-    return ef
+    edv = np.max(volumes)
+    esv = np.min(volumes)
+    ef = ((edv - esv) / edv) * 100 if edv > 0 else 0.0
+
+    stats = {
+        'predicted_ef': ef,
+        'volume_range': edv - esv,
+        'volume_mean': np.mean(volumes),
+        'volume_std': np.std(volumes),
+        'volume_max': np.max(volumes),
+        'volume_min': np.min(volumes),
+        'volume_ratio': esv / edv if edv > 0 else 0.0,
+        'length_mean': np.mean(lengths),
+        'length_std': np.std(lengths),
+        'length_range': np.max(lengths) - np.min(lengths),
+        'area_mean': np.mean(areas),
+        'area_std': np.std(areas),
+        'area_range': np.max(areas) - np.min(areas),
+    }
+
+    return stats | flow_stats

@@ -1,6 +1,9 @@
 import os
-from box.exceptions import BoxValueError
 import yaml
+
+import numpy as np
+
+from box.exceptions import BoxValueError
 from ensure import ensure_annotations
 from box import ConfigBox
 from pathlib import Path

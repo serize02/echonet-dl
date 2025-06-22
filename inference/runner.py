@@ -30,33 +30,29 @@ class InferenceRunner:
         meta = self.data
         y_trues = self.data['EF'].values
 
-        y_preds = []
-        mean_divergence = []
-        mean_dice = []
-
         with tqdm(total=len(meta)) as pbar:
             
             for _, row in meta.iterrows():
                 
                 file = row['FileName']
-                split = row['Split']
-                true_ef = row['EF']
+                
+                results = {
+                    'model_name': self.model_name,
+                    'filename': file,
+                    'split': row['Split'],
+                    'true_ef': row['EF']
+                }
 
-                pbar.set_description(f"{file}.avi | True EF: {true_ef:.1f}")
+                pbar.set_description(f"{file}.avi")
 
                 video_path = os.path.join('data/echonet', file + '.avi')
                 
-                areas, lengths, flow_, dice_ = fbf_prediction(self.model, self.device, video_path)
+                stats = estimate_ef(self.model, self.device, video_path)
 
-                mean_divergence.append(flow_)
-                mean_dice.append(dice_)
-                
-                predicted_ef = estimate_ef(areas, lengths)
-                y_preds.append(predicted_ef)
-
-                send(file, split, true_ef, predicted_ef, dice_, flow_, self.model_name)
+                send(results|stats)
 
                 pbar.update(1)
+
 
 
         
