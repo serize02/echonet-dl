@@ -50,6 +50,7 @@ class InferenceRunner:
                 stats = estimate_ef(self.model, self.device, video_path)
 
                 send(results|stats)
+                #print(results | stats)
 
                 pbar.update(1)
 

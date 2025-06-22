@@ -1,12 +1,12 @@
 import os
 import cv2
-
 import torch
-
 import pandas as pd
 import numpy as np
+
 from torchvision import transforms
 from scipy.spatial.distance import pdist
+from scipy.fftpack import dst, idst
 
 image_transforms = transforms.Compose([
     transforms.ToTensor(),
@@ -39,9 +39,50 @@ def estimate_L(mask: np.ndarray) -> float:
     return float(max_distance)
 
 
-def flow_stats(masks, pixel_spacing=0.1):
-    divergence_scores = []
+def stats_helper(arr: list):
+    
+    if len(arr) > 0:
+        mean_arr = float(np.mean(arr))
+        var_arr = float(np.var(arr))
+        std_arr = float(np.std(arr))
+        max_arr = float(np.max(arr))
+        min_arr = float(np.min(arr))
+    else:
+        mean_arr = var_arr = std_arr = max_arr = min_arr = 0.0
+    
+    return mean_arr, var_arr, std_arr, max_arr, min_arr
+
+
+def poisson_solver_fft(f):  # solve Δu = f using DST (Dirichlet BC)
+    f = f[1:-1, 1:-1]
+    n, m = f.shape
+    f_sin = dst(dst(f, type=1, axis=0), type=1, axis=1)
+    denom = (np.pi * np.arange(1, n+1) / (n+1))[:, None]**2 + (np.pi * np.arange(1, m+1) / (m+1))**2
+    u_sin = f_sin / denom
+    u = idst(idst(u_sin, type=1, axis=0), type=1, axis=1)
+    return np.pad(u / (2 * (n+1) * (m+1)), ((1,1),(1,1)), mode='constant')
+
+
+
+def flow_stats(masks, pixel_spacing=0.1, alpha=0.7, beta=0.2):
+    """
+    Computes motion-based flow statistics from a sequence of masks using optical flow
+    and Helmholtz-Hodge decomposition.
+
+    Parameters:
+        alpha (float): Weight for irrotational energy in the combined flow index.
+        beta (float): Weight for solenoidal energy in the combined flow index.
+
+    Notes:
+        - If alpha > beta: the combined index is more sensitive to divergent motion.
+        - If beta > alpha: the index is more sensitive to vortical (rotational) motion.
+    """
     magnitudes = []
+    divergence_scores = []
+    vorticity_scores = []
+    irrot_energies = []
+    soleno_energies = []
+    combined_flow_indices = []
     dice_scores = []
 
     prev = None
@@ -58,61 +99,92 @@ def flow_stats(masks, pixel_spacing=0.1):
             vx = flow[..., 0] * pixel_spacing
             vy = flow[..., 1] * pixel_spacing
 
-            mag = np.sqrt(vx**2 + vy**2)
+            
+            mag = np.sqrt(vx**2 + vy**2)  # magnitude         
             magnitudes.append(mag[lv_region])
-
-            dx = cv2.Sobel(vx, cv2.CV_64F, 1, 0, ksize=5)
+            
+            dx = cv2.Sobel(vx, cv2.CV_64F, 1, 0, ksize=5) # divergence
             dy = cv2.Sobel(vy, cv2.CV_64F, 0, 1, ksize=5)
             divergence = dx + dy
             avg_divergence = np.mean(np.abs(divergence[lv_region]))
             divergence_scores.append(avg_divergence)
 
-            intersection = np.logical_and(prev, curr).sum()
+            dvx_dy = cv2.Sobel(vx, cv2.CV_64F, 0, 1, ksize=5) # vorticity
+            dvy_dx = cv2.Sobel(vy, cv2.CV_64F, 1, 0, ksize=5)
+            vorticity = dvy_dx - dvx_dy
+            vorticity_scores.append(np.mean(np.abs(vorticity[lv_region])))
+
+            phi = poisson_solver_fft(divergence) # poisson equations
+            psi = poisson_solver_fft(vorticity)
+
+            phi_x = cv2.Sobel(phi, cv2.CV_64F, 1, 0, ksize=5) # reconstruct components
+            phi_y = cv2.Sobel(phi, cv2.CV_64F, 0, 1, ksize=5)
+            grad_phi = np.stack([phi_x, phi_y], axis=-1)
+
+            psi_x = cv2.Sobel(psi, cv2.CV_64F, 1, 0, ksize=5)
+            psi_y = cv2.Sobel(psi, cv2.CV_64F, 0, 1, ksize=5)
+            perp_grad_psi = np.stack([-psi_y, psi_x], axis=-1)
+
+            irrot_energy = 0.5* np.sum((grad_phi[lv_region]**2).sum(axis=-1))
+            soleno_energy = 0.5 * np.sum((perp_grad_psi[lv_region]**2).sum(axis=-1))
+            irrot_energies.append(irrot_energy)
+            soleno_energies.append(soleno_energy)
+
+            e_tot = irrot_energy + soleno_energy # combined flow index
+            M = alpha * (irrot_energy / e_tot) + beta * (soleno_energy / e_tot) if e_tot > 0.0 else 0.0
+            combined_flow_indices.append(M)
+
+            intersection = np.logical_and(prev, curr).sum() # dice
             dice = (2.0 * intersection) / (prev.sum() + curr.sum() + 1e-5)
             dice_scores.append(dice)
 
         prev = curr
 
-    # Flatten all magnitudes
     mags = np.concatenate(magnitudes) if magnitudes else np.array([])
 
-    if mags.size > 0:
-        mean_mag = float(np.mean(mags))
-        var_mag = float(np.var(mags))
-        std_mag = float(np.std(mags))
-        max_mag = float(np.max(mags))
-    else:
-        mean_mag = var_mag = std_mag = max_mag = 0.0
-
-    if len(divergence_scores) > 0:
-        mean_div = float(np.mean(divergence_scores))
-        var_div = float(np.var(divergence_scores))
-        std_div = float(np.std(divergence_scores))
-        max_div = float(np.max(divergence_scores))
-    else:
-        mean_div = var_div = std_div = max_div = 0.0
-
-    if len(dice_scores) > 0:
-        mean_dice = float(np.mean(dice_scores))
-        var_dice = float(np.var(dice_scores))
-        std_dice = float(np.std(dice_scores))
-        min_dice = float(np.min(dice_scores))
-    else:
-        mean_dice = var_dice = std_dice = min_dice = 0.0
+    mean_mag, var_mag, std_mag, max_mag, min_mag = stats_helper(mags)
+    mean_div, var_div, std_div, max_div, min_div = stats_helper(divergence_scores)
+    mean_vor, var_vor, std_vor, max_vor, min_vor = stats_helper(vorticity_scores)
+    mean_irrot, var_irrot, std_irrot, max_irrot, min_irrot = stats_helper(irrot_energies)
+    mean_soleno, var_soleno, std_soleno, max_soleno, min_soleno = stats_helper(soleno_energies)
+    mean_combined_flow_index, var_combined_flow_index, std_combined_flow_index, max_combined_flow_index, min_combined_flow_index = stats_helper(combined_flow_indices)
+    mean_dice, var_dice, std_dice, max_dice, min_dice = stats_helper(dice_scores)
 
     stats = {
-        'mean_magnitude': mean_mag,
-        'var_magnitude': var_mag,
-        'std_magnitude': std_mag,
-        'max_magnitude': max_mag,
-        'mean_divergence': mean_div,
-        'var_divergence': var_div,
-        'std_divergence': std_div,
-        'max_divergence': max_div,
-        'mean_dice': mean_dice,
-        'var_dice': var_dice,
-        'std_dice': std_dice,
-        'min_dice': min_dice,
+        'magnitude_mean': mean_mag,
+        'magnitude_var': var_mag,
+        'magnitude_std': std_mag,
+        'magnitude_range': max_mag - min_mag,
+
+        'divergence_mean': mean_div,
+        'divergence_var': var_div,
+        'divergence_std': std_div,
+        'divergence_range': max_div - min_div,
+
+        'vorticity_mean': mean_vor,
+        'vorticity_var': var_vor,
+        'vorticity_std': std_vor,
+        'vorticity_range': max_vor - min_vor,
+
+        'irrot_energy_mean': mean_irrot,
+        'irrot_energy_var': var_irrot,
+        'irrot_energy_std': std_irrot,
+        'irrot_energy_range': max_irrot - min_irrot,
+
+        'soleno_energy_mean': mean_soleno,
+        'soleno_energy_var': var_soleno,
+        'soleno_energy_std': std_soleno,
+        'soleno_energy_range': max_soleno - min_soleno,
+
+        'combined_flow_index_mean': mean_combined_flow_index,
+        'combined_flow_index_var': var_combined_flow_index,
+        'combined_flow_index_std': std_combined_flow_index,
+        'combined_flow_index_range': max_combined_flow_index - min_combined_flow_index,
+
+        'dice_mean': mean_dice,
+        'dice_var': var_dice,
+        'dice_std': std_dice,
+        'dice_range': max_dice - min_dice,
     }
 
     return stats
@@ -167,24 +239,31 @@ def estimate_ef(model, device, video_path, pixel_spacing=0.1):
 
     volumes = np.array(volumes)
 
-    edv = np.max(volumes)
-    esv = np.min(volumes)
-    ef = ((edv - esv) / edv) * 100 if edv > 0 else 0.0
+    # edv - volume_max
+    # esv - volume_min
+
+    volume_mean, volume_var, volume_std, volume_max, volume_min = stats_helper(volumes)
+    length_mean, length_var, length_std, length_max, length_min = stats_helper(lengths)
+    area_mean, area_var, area_std, area_max, area_min = stats_helper(areas)
 
     stats = {
-        'predicted_ef': ef,
-        'volume_range': edv - esv,
-        'volume_mean': np.mean(volumes),
-        'volume_std': np.std(volumes),
-        'volume_max': np.max(volumes),
-        'volume_min': np.min(volumes),
-        'volume_ratio': esv / edv if edv > 0 else 0.0,
-        'length_mean': np.mean(lengths),
-        'length_std': np.std(lengths),
-        'length_range': np.max(lengths) - np.min(lengths),
-        'area_mean': np.mean(areas),
-        'area_std': np.std(areas),
-        'area_range': np.max(areas) - np.min(areas),
+        'predicted_ef': ((volume_max - volume_min) / volume_max) * 100 if volume_max > 0 else 0.0,
+        
+        'volume_mean': volume_mean,
+        'volume_var': volume_var,
+        'volume_std': volume_std,
+        'volume_range': volume_max - volume_min,
+        'volume_ratio': volume_min / volume_max if volume_max > 0 else 0.0,
+
+        'length_mean': length_mean,
+        'length_std': length_std,
+        'length_range': length_max - length_min,
+        'length_ratio': length_min / length_max if length_max > 0 else 0.0,
+
+        'area_mean': area_mean,
+        'area_std': area_std,
+        'area_range': area_max - area_min,
+        'area_ratio': area_min / area_max if area_max > 0 else 0.0
     }
 
     return stats | flow_stats

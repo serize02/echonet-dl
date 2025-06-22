@@ -32,46 +32,105 @@ func insertPrediction(db *sql.DB, metaID, modelID int, req models.PredictionRequ
 	_, err := db.Exec(`
 	INSERT INTO predictions (
 		meta_id, model_id, predicted_ef,
-		volume_range, volume_mean, volume_std, volume_max, volume_min, volume_ratio,
-		length_mean, length_std, length_range,
-		area_mean, area_std, area_range,
-		mean_magnitude, var_magnitude, std_magnitude, max_magnitude,
-		mean_divergence, var_divergence, std_divergence, max_divergence,
-		mean_dice, var_dice, std_dice, min_dice
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+		volume_mean, volume_var, volume_std, volume_range, volume_ratio,
+
+		length_mean, length_std, length_range, length_ratio,
+
+		area_mean, area_std, area_range, area_ratio,
+
+		magnitude_mean, magnitude_var, magnitude_std, magnitude_range,
+
+		divergence_mean, divergence_var, divergence_std, divergence_range,
+
+		vorticity_mean, vorticity_var, vorticity_std, vorticity_range,
+
+		irrot_energy_mean, irrot_energy_var, irrot_energy_std, irrot_energy_range,
+
+		soleno_energy_mean, soleno_energy_var, soleno_energy_std, soleno_energy_range,
+
+		combined_flow_index_mean, combined_flow_index_var, combined_flow_index_std, combined_flow_index_range,
+
+		dice_mean, dice_var, dice_std, dice_range
+
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
 	ON CONFLICT(meta_id, model_id) DO UPDATE SET
-		predicted_ef     = excluded.predicted_ef,
-		volume_range     = excluded.volume_range,
-		volume_mean      = excluded.volume_mean,
-		volume_std       = excluded.volume_std,
-		volume_max       = excluded.volume_max,
-		volume_min       = excluded.volume_min,
-		volume_ratio     = excluded.volume_ratio,
-		length_mean      = excluded.length_mean,
-		length_std       = excluded.length_std,
-		length_range     = excluded.length_range,
-		area_mean        = excluded.area_mean,
-		area_std         = excluded.area_std,
-		area_range       = excluded.area_range,
-		mean_magnitude   = excluded.mean_magnitude,
-		var_magnitude    = excluded.var_magnitude,
-		std_magnitude    = excluded.std_magnitude,
-		max_magnitude    = excluded.max_magnitude,
-		mean_divergence  = excluded.mean_divergence,
-		var_divergence   = excluded.var_divergence,
-		std_divergence   = excluded.std_divergence,
-		max_divergence   = excluded.max_divergence,
-		mean_dice        = excluded.mean_dice,
-		var_dice         = excluded.var_dice,
-		std_dice         = excluded.std_dice,
-		min_dice         = excluded.min_dice
-	`, metaID, modelID, req.PredictedEF,
-		req.VolumeRange, req.VolumeMean, req.VolumeStd, req.VolumeMax, req.VolumeMin, req.VolumeRatio,
-		req.LengthMean, req.LengthStd, req.LengthRange,
-		req.AreaMean, req.AreaStd, req.AreaRange,
-		req.MeanMagnitude, req.VarMagnitude, req.StdMagnitude, req.MaxMagnitude,
-		req.MeanDivergence, req.VarDivergence, req.StdDivergence, req.MaxDivergence,
-		req.MeanDice, req.VarDice, req.StdDice, req.MinDice)
+		predicted_ef = excluded.predicted_ef,
+
+		volume_mean = excluded.volume_mean,
+		volume_var = excluded.volume_var,
+		volume_std = excluded.volume_std,
+		volume_range = excluded.volume_range,
+		volume_ratio = excluded.volume_ratio,
+
+		length_mean = excluded.length_mean,
+		length_std = excluded.length_std,
+		length_range = excluded.length_range,
+		length_ratio = excluded.length_ratio,
+
+		area_mean = excluded.area_mean,
+		area_std = excluded.area_std,
+		area_range = excluded.area_range,
+		area_ratio = excluded.area_ratio,
+
+		magnitude_mean = excluded.magnitude_mean,
+		magnitude_var = excluded.magnitude_var,
+		magnitude_std = excluded.magnitude_std,
+		magnitude_range = excluded.magnitude_range,
+
+		divergence_mean = excluded.divergence_mean,
+		divergence_var = excluded.divergence_var,
+		divergence_std = excluded.divergence_std,
+		divergence_range = excluded.divergence_range,
+
+		vorticity_mean = excluded.vorticity_mean,
+		vorticity_var = excluded.vorticity_var,
+		vorticity_std = excluded.vorticity_std,
+		vorticity_range = excluded.vorticity_range,
+
+		irrot_energy_mean = excluded.irrot_energy_mean,
+		irrot_energy_var = excluded.irrot_energy_var,
+		irrot_energy_std = excluded.irrot_energy_std,
+		irrot_energy_range = excluded.irrot_energy_range,
+
+		soleno_energy_mean = excluded.soleno_energy_mean,
+		soleno_energy_var = excluded.soleno_energy_var,
+		soleno_energy_std = excluded.soleno_energy_std,
+		soleno_energy_range = excluded.soleno_energy_range,
+
+		combined_flow_index_mean = excluded.combined_flow_index_mean,
+		combined_flow_index_var = excluded.combined_flow_index_var,
+		combined_flow_index_std = excluded.combined_flow_index_std,
+		combined_flow_index_range = excluded.combined_flow_index_range,
+
+		dice_mean = excluded.dice_mean,
+		dice_var = excluded.dice_var,
+		dice_std = excluded.dice_std,
+		dice_range = excluded.dice_range
+	`,
+		metaID, modelID, req.PredictedEF,
+
+		req.VolumeMean, req.VolumeVar, req.VolumeStd, req.VolumeRange, req.VolumeRatio,
+
+		req.LengthMean, req.LengthStd, req.LengthRange, req.LengthRatio,
+
+		req.AreaMean, req.AreaStd, req.AreaRange, req.AreaRatio,
+
+		req.MagnitudeMean, req.MagnitudeVar, req.MagnitudeStd, req.MagnitudeRange,
+
+		req.DivergenceMean, req.DivergenceVar, req.DivergenceStd, req.DivergenceRange,
+
+		req.VorticityMean, req.VorticityVar, req.VorticityStd, req.VorticityRange,
+
+		req.IrrotEnergyMean, req.IrrotEnergyVar, req.IrrotEnergyStd, req.IrrotEnergyRange,
+
+		req.SolenoEnergyMean, req.SolenoEnergyVar, req.SolenoEnergyStd, req.SolenoEnergyRange,
+
+		req.CombinedFlowIndexMean, req.CombinedFlowIndexVar, req.CombinedFlowIndexStd, req.CombinedFlowIndexRange,
+
+		req.DiceMean, req.DiceVar, req.DiceStd, req.DiceRange,
+	)
 	return err
 }
 
