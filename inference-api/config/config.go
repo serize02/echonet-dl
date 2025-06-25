@@ -1,3 +1,3 @@
 package config
 
-const DBPath = "../data/hh_inference.db"
+const DBPath = "../data/meta_inference.db"

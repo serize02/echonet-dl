@@ -3,9 +3,9 @@
 # Usage: ./export_predictions.sh [database_file] [model_name] [output_file]
 # Defaults: data/helmholtz_hodge_inference.db, ResNet50-UNet, data/inference_helmholtz.csv
 
-DB_FILE=${1:-data/hh_inference.db}
+DB_FILE=${1:-data/meta_inference.db}
 MODEL_NAME=${2:-ResNet50-UNet}
-OUTPUT_FILE=${3:-data/hh_inference.csv}
+OUTPUT_FILE=${3:-data/meta_inference.csv}
 
 sqlite3 "$DB_FILE" -header -csv "
 SELECT 

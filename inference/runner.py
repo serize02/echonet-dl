@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 from torchvision import transforms
+from sklearn.metrics import mean_absolute_error as mae
 from tqdm import tqdm
 
 from utils.server import send
@@ -28,7 +29,6 @@ class InferenceRunner:
     def run(self):
 
         meta = self.data
-        y_trues = self.data['EF'].values
 
         with tqdm(total=len(meta)) as pbar:
             
@@ -49,8 +49,8 @@ class InferenceRunner:
                 
                 stats = estimate_ef(self.model, self.device, video_path)
 
-                send(results|stats)
-                #print(results | stats)
+                # send(results|stats)
+                print(results | stats)
 
                 pbar.update(1)
 

@@ -53,30 +53,21 @@ def stats_helper(arr: list):
     return mean_arr, var_arr, std_arr, max_arr, min_arr
 
 
-def poisson_solver_fft(f):  # solve Δu = f using DST (Dirichlet BC)
+
+def poisson_solver_fft(f):  
     f = f[1:-1, 1:-1]
     n, m = f.shape
     f_sin = dst(dst(f, type=1, axis=0), type=1, axis=1)
     denom = (np.pi * np.arange(1, n+1) / (n+1))[:, None]**2 + (np.pi * np.arange(1, m+1) / (m+1))**2
     u_sin = f_sin / denom
     u = idst(idst(u_sin, type=1, axis=0), type=1, axis=1)
-    return np.pad(u / (2 * (n+1) * (m+1)), ((1,1),(1,1)), mode='constant')
+    u /= (4 * (n + 1) * (m + 1))
+    return np.pad(u, ((1, 1), (1, 1)), mode='constant')
 
 
 
-def flow_stats(masks, pixel_spacing=0.1, alpha=0.7, beta=0.2):
-    """
-    Computes motion-based flow statistics from a sequence of masks using optical flow
-    and Helmholtz-Hodge decomposition.
+def flow_stats(masks, pixel_spacing=0.1, alpha=0.8, beta=0.2):
 
-    Parameters:
-        alpha (float): Weight for irrotational energy in the combined flow index.
-        beta (float): Weight for solenoidal energy in the combined flow index.
-
-    Notes:
-        - If alpha > beta: the combined index is more sensitive to divergent motion.
-        - If beta > alpha: the index is more sensitive to vortical (rotational) motion.
-    """
     magnitudes = []
     divergence_scores = []
     vorticity_scores = []
@@ -98,26 +89,26 @@ def flow_stats(masks, pixel_spacing=0.1, alpha=0.7, beta=0.2):
 
             vx = flow[..., 0] * pixel_spacing
             vy = flow[..., 1] * pixel_spacing
-
             
-            mag = np.sqrt(vx**2 + vy**2)  # magnitude         
+            mag = np.sqrt(vx**2 + vy**2)      
             magnitudes.append(mag[lv_region])
             
-            dx = cv2.Sobel(vx, cv2.CV_64F, 1, 0, ksize=5) # divergence
+            dx = cv2.Sobel(vx, cv2.CV_64F, 1, 0, ksize=5)
             dy = cv2.Sobel(vy, cv2.CV_64F, 0, 1, ksize=5)
             divergence = dx + dy
-            avg_divergence = np.mean(np.abs(divergence[lv_region]))
+
+            avg_divergence = np.mean(divergence[lv_region]) # np.mean(np.abs(divergence[lv_region]))
             divergence_scores.append(avg_divergence)
 
-            dvx_dy = cv2.Sobel(vx, cv2.CV_64F, 0, 1, ksize=5) # vorticity
+            dvx_dy = cv2.Sobel(vx, cv2.CV_64F, 0, 1, ksize=5)
             dvy_dx = cv2.Sobel(vy, cv2.CV_64F, 1, 0, ksize=5)
             vorticity = dvy_dx - dvx_dy
             vorticity_scores.append(np.mean(np.abs(vorticity[lv_region])))
 
-            phi = poisson_solver_fft(divergence) # poisson equations
+            phi = poisson_solver_fft(divergence)
             psi = poisson_solver_fft(vorticity)
 
-            phi_x = cv2.Sobel(phi, cv2.CV_64F, 1, 0, ksize=5) # reconstruct components
+            phi_x = cv2.Sobel(phi, cv2.CV_64F, 1, 0, ksize=5)
             phi_y = cv2.Sobel(phi, cv2.CV_64F, 0, 1, ksize=5)
             grad_phi = np.stack([phi_x, phi_y], axis=-1)
 
@@ -130,11 +121,11 @@ def flow_stats(masks, pixel_spacing=0.1, alpha=0.7, beta=0.2):
             irrot_energies.append(irrot_energy)
             soleno_energies.append(soleno_energy)
 
-            e_tot = irrot_energy + soleno_energy # combined flow index
+            e_tot = irrot_energy + soleno_energy
             M = alpha * (irrot_energy / e_tot) + beta * (soleno_energy / e_tot) if e_tot > 0.0 else 0.0
             combined_flow_indices.append(M)
 
-            intersection = np.logical_and(prev, curr).sum() # dice
+            intersection = np.logical_and(prev, curr).sum()
             dice = (2.0 * intersection) / (prev.sum() + curr.sum() + 1e-5)
             dice_scores.append(dice)
 
@@ -234,13 +225,10 @@ def estimate_ef(model, device, video_path, pixel_spacing=0.1):
     for area_px, length in zip(areas, lengths):
         length_cm = length * pixel_spacing
         area_cm2 = area_px * (pixel_spacing ** 2)
-        volume = area_cm2 * length_cm
+        volume = (5 / 6) * area_cm2 * length_cm
         volumes.append(volume)
 
     volumes = np.array(volumes)
-
-    # edv - volume_max
-    # esv - volume_min
 
     volume_mean, volume_var, volume_std, volume_max, volume_min = stats_helper(volumes)
     length_mean, length_var, length_std, length_max, length_min = stats_helper(lengths)
