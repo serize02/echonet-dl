@@ -1,8 +1,6 @@
 package db
 
-import (
-	"database/sql"
-)
+import "database/sql"
 
 func SeedModels(db *sql.DB) error {
 	models := []string{"ResNet50-UNet", "UNet-baseline"}

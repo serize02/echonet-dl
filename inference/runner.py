@@ -15,12 +15,14 @@ from utils.inference import fbf_prediction, estimate_ef
 
 class InferenceRunner:
     
-    def __init__(self, model, device, data, model_name):
+    def __init__(self, model, device, bias_predictor, data, path, model_name, ):
         
         self.model = model
         self.device = device
+        self.bias_predictor = bias_predictor
         self.data = data
         self.model_name = model_name
+        self.path = path
 
         self.model.to(self.device)
         self.model.eval()
@@ -45,11 +47,20 @@ class InferenceRunner:
 
                 pbar.set_description(f"{file}.avi")
 
-                video_path = os.path.join('data/echonet', file + '.avi')
+                video_path = os.path.join(self.path, file + '.avi')
                 
                 stats = estimate_ef(self.model, self.device, video_path)
 
+                features = pd.DataFrame([{
+                    'length_ratio': stats['length_ratio'],
+                    'volume_ratio': stats['volume_ratio']
+                }])
+
+                stats['predicted_bias'] = float(self.bias_predictor.predict(features))
+
                 send(results|stats)
+
+                # print(results|stats)
 
                 pbar.update(1)
 
