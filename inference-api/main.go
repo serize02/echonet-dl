@@ -25,7 +25,7 @@ func main() {
 	log.Println("Models seeded.")
 
 	r := gin.Default()
-	r.POST("/predict", handlers.PostPrediction(database))
+	r.POST("/store", handlers.PostPrediction(database))
 
 	log.Println("Server running at http://localhost:8080")
 	r.Run(":8080")

@@ -2,7 +2,7 @@ import requests
 import numpy as np
 
 def send(data):
-    url = "http://localhost:8080/predict"
+    url = "http://localhost:8080/store"
 
     clean_data = {k: v.item() if isinstance(v, np.generic) else v for k, v in data.items()}
 
