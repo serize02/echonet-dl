@@ -60,8 +60,6 @@ class InferenceRunner:
 
                 send(results|stats)
 
-                # print(results|stats)
-
                 pbar.update(1)
 
 
