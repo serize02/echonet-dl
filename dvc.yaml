@@ -1,0 +1,22 @@
+stages:
+  load:
+    cmd: python scripts/load.py
+    deps:
+    - scripts/load.py
+    outs:
+    - artifacts/resnet50-unet:v1
+  predict:
+    cmd: python scripts/predict.py
+    deps:
+    - artifacts/resnet50-unet:v1
+    - runner/runner.py
+    - utils/inference.py
+    - utils/server.py
+    - scripts/predict.py
+  export:
+    cmd: bash scripts/export.sh
+    deps:
+    - inference.db
+    - scripts/export.sh
+    outs:
+    - inference.csv

@@ -8,5 +8,5 @@ type PredictionRequest struct {
 	ModelName     string  `json:"model_name" binding:"required"`
 	VolumeRatio   float64 `json:"volume_ratio" binding:"required"`
 	LengthRatio   float64 `json:"length_ratio" binding:"required"`
-	PredictedBias float64 `json:"predicted_bias" binding:"required"`
+	// PredictedBias float64 `json:"predicted_bias" binding:"required"` -> bias-predictor branch
 }

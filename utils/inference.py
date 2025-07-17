@@ -15,7 +15,7 @@ image_transforms = transforms.Compose([
 
 def get_meta(split=None):
     
-    meta = pd.read_csv('data/echonet-dynamic/FileList.csv')
+    meta = pd.read_csv('data/annotations/metadata.csv')
     
     if split is not None:
         meta = meta[meta['Split'] == split]
