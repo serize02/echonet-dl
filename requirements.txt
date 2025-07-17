@@ -15,3 +15,4 @@ scikit-learn
 torch
 torchvision
 requests
+segmentation-models-pytorch

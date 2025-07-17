@@ -1,0 +1,28 @@
+networks:
+  inference_net:
+    driver: bridge
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "8080:8080"
+    networks:
+      - inference_net
+    volumes:
+      - ./inference.db:/app/inference.db
+
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    depends_on:
+      - server
+    networks:
+      - inference_net
+    volumes:
+      - ./:/app
+    environment:
+      - WANDB_API_KEY=${WANDB_API_KEY}

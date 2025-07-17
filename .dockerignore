@@ -1,0 +1,12 @@
+.git
+wandb/
+*.ckpt
+*.pth
+__pycache__/
+*.ipynb
+*.log
+*.csv
+*.json
+data/
+.cache/
+.dvc/
