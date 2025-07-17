@@ -13,10 +13,10 @@ from tqdm import tqdm
 from utils.server import send
 from utils.inference import fbf_prediction, estimate_ef
 
+
 class InferenceRunner:
-    
-    def __init__(self, model, device, data, path, model_name, ):
-        
+
+    def __init__(self, model, device, data, path, model_name):
         self.model = model
         self.device = device
         self.data = data
@@ -27,41 +27,32 @@ class InferenceRunner:
         self.model.eval()
 
     def run(self):
-
         meta = self.data
         y_trues = self.data['EF'].values
 
         with tqdm(total=len(meta)) as pbar:
-            
             for _, row in meta.iterrows():
-                
                 file = row['FileName']
-                
-                results = {
-                    'model_name': self.model_name,
-                    'filename': file,
-                    'split': row['Split'],
-                    'true_ef': row['EF']
-                }
+                video_path = os.path.join(self.path, file + '.avi')
 
                 pbar.set_description(f"{file}.avi")
 
-                video_path = os.path.join(self.path, file + '.avi')
-                
-                stats = estimate_ef(self.model, self.device, video_path)
+                try:
+                    stats = estimate_ef(self.model, self.device, video_path)
 
-                features = pd.DataFrame([{
-                    'length_ratio': stats['length_ratio'],
-                    'volume_ratio': stats['volume_ratio']
-                }])
+                    results = {
+                        'model_name': self.model_name,
+                        'filename': file,
+                        'split': row['Split'],
+                        'true_ef': row['EF'],
+                        'length_ratio': stats['length_ratio'],
+                        'volume_ratio': stats['volume_ratio'],
+                        'predicted_ef': stats['predicted_ef']
+                    }
 
-                send(results|stats)
+                    send(results)
+
+                except Exception as e:
+                    print(f"Skipping {file}.avi due to error: {e}")
 
                 pbar.update(1)
-
-
-
-        
-
-
-    

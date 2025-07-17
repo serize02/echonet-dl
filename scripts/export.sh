@@ -11,9 +11,7 @@ SELECT
     meta.true_ef,
     predictions.predicted_ef,
     predictions.volume_ratio,
-    predictions.length_ratio,
-    predictions.predicted_bias
-
+    predictions.length_ratio
 FROM predictions
 JOIN meta ON predictions.meta_id = meta.id
 JOIN models ON predictions.model_id = models.id

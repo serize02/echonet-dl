@@ -24,6 +24,6 @@ if __name__ == '__main__':
         classes=1
     )
     model.load_state_dict(torch.load('artifacts/resnet50-unet:v1/resnet50.pth', map_location=torch.device('cpu')))
-    data = get_meta(split='TEST')
+    data = get_meta()
     runner = InferenceRunner(model, device, data, PATH, MODEL_NAME)
     runner.run()
