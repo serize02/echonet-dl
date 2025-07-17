@@ -1,0 +1,17 @@
+wandb
+pandas
+gdown
+dvc
+numpy
+matplotlib
+seaborn
+python-box==6.0.2
+pyYAML
+tqdm
+ensure==1.0.2
+joblib
+scipy
+scikit-learn
+torch
+torchvision
+requests
