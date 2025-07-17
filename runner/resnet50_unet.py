@@ -6,7 +6,6 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 import torch
 import joblib
-import pickle as pkl
 
 import segmentation_models_pytorch as smp
 
