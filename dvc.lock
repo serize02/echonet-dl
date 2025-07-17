@@ -1,0 +1,15 @@
+schema: '2.0'
+stages:
+  load:
+    cmd: python scripts/load.py
+    deps:
+    - path: scripts/load.py
+      hash: md5
+      md5: 5163d8141a0d571997751f67f7b567f9
+      size: 212
+    outs:
+    - path: artifacts/resnet50-unet:v1
+      hash: md5
+      md5: 8b74f21cc05d31931857923324673ed9.dir
+      size: 130415674
+      nfiles: 1
