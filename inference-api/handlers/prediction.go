@@ -31,14 +31,13 @@ func getModelID(db *sql.DB, modelName string) (int, error) {
 func insertPrediction(db *sql.DB, metaID, modelID int, req models.PredictionRequest) error {
 	_, err := db.Exec(`
 	INSERT INTO predictions (
-		meta_id, model_id, predicted_ef, volume_ratio, length_ratio, predicted_bias
-	) VALUES (?, ?, ?, ?, ?, ?)
+		meta_id, model_id, predicted_ef, volume_ratio, length_ratio
+	) VALUES (?, ?, ?, ?, ?)
 	ON CONFLICT(meta_id, model_id) DO UPDATE SET
 		predicted_ef     = excluded.predicted_ef,
 		volume_ratio     = excluded.volume_ratio,
-		length_ratio     = excluded.length_ratio,
-		predicted_bias   = excluded.predicted_bias
-	`, metaID, modelID, req.PredictedEF, req.VolumeRatio, req.LengthRatio, req.PredictedBias)
+		length_ratio     = excluded.length_ratio
+	`, metaID, modelID, req.PredictedEF, req.VolumeRatio, req.LengthRatio)
 
 	return err
 }

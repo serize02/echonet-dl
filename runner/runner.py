@@ -15,11 +15,10 @@ from utils.inference import fbf_prediction, estimate_ef
 
 class InferenceRunner:
     
-    def __init__(self, model, device, bias_predictor, data, path, model_name, ):
+    def __init__(self, model, device, data, path, model_name, ):
         
         self.model = model
         self.device = device
-        self.bias_predictor = bias_predictor
         self.data = data
         self.model_name = model_name
         self.path = path
@@ -55,8 +54,6 @@ class InferenceRunner:
                     'length_ratio': stats['length_ratio'],
                     'volume_ratio': stats['volume_ratio']
                 }])
-
-                stats['predicted_bias'] = float(self.bias_predictor.predict(features))
 
                 send(results|stats)
 
