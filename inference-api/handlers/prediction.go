@@ -31,13 +31,15 @@ func getModelID(db *sql.DB, modelName string) (int, error) {
 func insertPrediction(db *sql.DB, metaID, modelID int, req models.PredictionRequest) error {
 	_, err := db.Exec(`
 	INSERT INTO predictions (
-		meta_id, model_id, predicted_ef, volume_ratio, length_ratio
-	) VALUES (?, ?, ?, ?, ?)
+		meta_id, model_id, predicted_ef, volume_ratio, length_ratio, dice_overlap_std, dice_overlap_ratio
+	) VALUES (?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(meta_id, model_id) DO UPDATE SET
-		predicted_ef     = excluded.predicted_ef,
-		volume_ratio     = excluded.volume_ratio,
-		length_ratio     = excluded.length_ratio
-	`, metaID, modelID, req.PredictedEF, req.VolumeRatio, req.LengthRatio)
+		predicted_ef     	= excluded.predicted_ef,
+		volume_ratio     	= excluded.volume_ratio,
+		length_ratio     	= excluded.length_ratio,
+		dice_overlap_std  	= excluded.dice_overlap_std,
+		dice_overlap_ratio  = excluded.dice_overlap_ratio
+	`, metaID, modelID, req.PredictedEF, req.VolumeRatio, req.LengthRatio, req.DiceOverlapStd, req.DiceOverlapRatio)
 
 	return err
 }

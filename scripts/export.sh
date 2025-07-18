@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DB_FILE=${1:-inference.db}
+DB_FILE=${1:-inference_feat.db}
 MODEL_NAME=${2:-ResNet50-UNet}
-OUTPUT_FILE=${3:-inference.csv}
+OUTPUT_FILE=${3:-inference_feat.csv}
 
 sqlite3 "$DB_FILE" -header -csv "
 SELECT 
@@ -11,7 +11,9 @@ SELECT
     meta.true_ef,
     predictions.predicted_ef,
     predictions.volume_ratio,
-    predictions.length_ratio
+    predictions.length_ratio,
+    predictions.dice_overlap_std,
+    predictions.dice_overlap_ratio
 FROM predictions
 JOIN meta ON predictions.meta_id = meta.id
 JOIN models ON predictions.model_id = models.id

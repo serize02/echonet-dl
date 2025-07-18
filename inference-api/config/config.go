@@ -1,3 +1,3 @@
 package config
 
-const DBPath = "../inference.db"
+const DBPath = "../inference_feat.db"

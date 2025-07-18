@@ -17,14 +17,16 @@ func Migrate(db *sql.DB) error {
 	);
 
 	CREATE TABLE IF NOT EXISTS predictions (
-	    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-	    meta_id         INTEGER NOT NULL,
-	    model_id        INTEGER NOT NULL,
-	    predicted_ef    REAL NOT NULL,
-	    volume_ratio    REAL NOT NULL,
-	    length_ratio    REAL NOT NULL,
-	    FOREIGN KEY (meta_id) REFERENCES meta(id),
-	    FOREIGN KEY (model_id) REFERENCES models(id),
+	    id              		INTEGER PRIMARY KEY AUTOINCREMENT,
+	    meta_id         		INTEGER NOT NULL,
+	    model_id        		INTEGER NOT NULL,
+	    predicted_ef    		REAL NOT NULL,
+	    volume_ratio    		REAL NOT NULL,
+	    length_ratio    		REAL NOT NULL,
+		dice_overlap_std 		REAL NOT NULL,
+		dice_overlap_ratio 		REAL NOT NULL,
+	    FOREIGN KEY (meta_id) 	REFERENCES meta(id),
+	    FOREIGN KEY (model_id) 	REFERENCES models(id),
 	    UNIQUE (meta_id, model_id)
 	);`
 

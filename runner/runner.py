@@ -45,12 +45,11 @@ class InferenceRunner:
                         'filename': file,
                         'split': row['Split'],
                         'true_ef': row['EF'],
-                        'length_ratio': stats['length_ratio'],
-                        'volume_ratio': stats['volume_ratio'],
-                        'predicted_ef': stats['predicted_ef']
                     }
+                    results |= stats
 
                     send(results)
+
 
                 except Exception as e:
                     print(f"Skipping {file}.avi due to error: {e}")

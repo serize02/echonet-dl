@@ -196,6 +196,6 @@ cython_debug/
 data/*
 wandb/*
 artifacts/*
-xai-db/inference.db
 logs/*
 inference.db
+inference_feat.db

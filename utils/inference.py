@@ -101,11 +101,28 @@ def fbf_prediction(model, device, video_path, pixel_spacing=0.1, max_frames=100)
     if len(areas) == 0 or len(lengths) == 0:
         raise ValueError("No valid frames were processed.")
 
-    return areas, lengths
+    return masks, areas, lengths
 
 
 def estimate_ef(model, device, video_path, pixel_spacing=0.1):
-    areas, lengths = fbf_prediction(model, device, video_path, pixel_spacing=pixel_spacing)
+    masks, areas, lengths = fbf_prediction(model, device, video_path, pixel_spacing=pixel_spacing)
+
+    dice_overlap = []
+
+    prev = None
+    for curr in masks:
+        if prev is not None:
+            try:
+                denominator = prev.sum() + curr.sum()
+                if denominator == 0:
+                    dice = 0.0
+                else:
+                    intersection = np.logical_and(prev, curr).sum()
+                    dice = (2.0 * intersection) / (denominator + 1e-5)
+                dice_overlap.append(dice)
+            except Exception as e:
+                print(f"Dice computation error: {e}")
+        prev = curr
 
     volumes = []
 
@@ -141,6 +158,8 @@ def estimate_ef(model, device, video_path, pixel_spacing=0.1):
         'predicted_ef': float(ef),
         'volume_ratio': float(esv / edv) if edv > 0 else 0.0,
         'length_ratio': float(length_min / length_max) if length_max > 0 else 0.0,
+        'dice_overlap_std': float(np.std(dice_overlap)),
+        'dice_overlap_ratio': float(np.min(dice_overlap) / np.max(dice_overlap))
     }
 
     return results

@@ -16,7 +16,7 @@ stages:
   export:
     cmd: bash scripts/export.sh
     deps:
-    - inference.db
+    - inference_feat.db
     - scripts/export.sh
     outs:
-    - inference.csv
+    - inference_feat.csv

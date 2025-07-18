@@ -13,3 +13,43 @@ stages:
       md5: 8b74f21cc05d31931857923324673ed9.dir
       size: 130415674
       nfiles: 1
+  predict:
+    cmd: python scripts/predict.py
+    deps:
+    - path: artifacts/resnet50-unet:v1
+      hash: md5
+      md5: 8b74f21cc05d31931857923324673ed9.dir
+      size: 130415674
+      nfiles: 1
+    - path: runner/runner.py
+      hash: md5
+      md5: 6624fcb67054d589fc0d019f691b36fd
+      size: 1426
+    - path: scripts/predict.py
+      hash: md5
+      md5: 5d229bf240716e7862639fe27d94e028
+      size: 758
+    - path: utils/inference.py
+      hash: md5
+      md5: b8d1359be0f8ec8fc8bee10c51bde434
+      size: 4843
+    - path: utils/server.py
+      hash: md5
+      md5: 39b84f4061544a0cbdf1e2051e99c8bf
+      size: 488
+  export:
+    cmd: bash scripts/export.sh
+    deps:
+    - path: inference.db
+      hash: md5
+      md5: 616d901f4be212806d315ac737310056
+      size: 491520
+    - path: scripts/export.sh
+      hash: md5
+      md5: afccb071f18e8e141e494156bee217ef
+      size: 574
+    outs:
+    - path: inference_feat.csv
+      hash: md5
+      md5: 439631d6ff95f0fa5074602ca2d52b36
+      size: 420132
