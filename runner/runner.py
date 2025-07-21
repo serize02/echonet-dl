@@ -16,12 +16,13 @@ from utils.inference import fbf_prediction, estimate_ef
 
 class InferenceRunner:
 
-    def __init__(self, model, device, data, path, model_name):
+    def __init__(self, model, device, data, path, model_name, bias_predictor):
         self.model = model
         self.device = device
         self.data = data
         self.model_name = model_name
         self.path = path
+        self.bias_predictor = bias_predictor
 
         self.model.to(self.device)
         self.model.eval()
@@ -40,6 +41,12 @@ class InferenceRunner:
                 try:
                     stats = estimate_ef(self.model, self.device, video_path)
 
+                    input_data = pd.DataFrame([{
+                        'volume_ratio': stats['volume_ratio'],
+                        'length_ratio': stats['length_ratio'],
+                        'dice_overlap_std': stats['dice_overlap_std']
+                    }])
+
                     results = {
                         'model_name': self.model_name,
                         'filename': file,
@@ -48,6 +55,7 @@ class InferenceRunner:
                     }
                     results |= stats
 
+                    results['predicted_bias'] = float(self.bias_predictor.predict(input_data))
                     send(results)
 
 

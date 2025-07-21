@@ -25,6 +25,7 @@ func Migrate(db *sql.DB) error {
 	    length_ratio    		REAL NOT NULL,
 		dice_overlap_std 		REAL NOT NULL,
 		dice_overlap_ratio 		REAL NOT NULL,
+		predicted_bias			REAL NOT NULL,
 	    FOREIGN KEY (meta_id) 	REFERENCES meta(id),
 	    FOREIGN KEY (model_id) 	REFERENCES models(id),
 	    UNIQUE (meta_id, model_id)

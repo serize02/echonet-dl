@@ -12,10 +12,10 @@ image_transforms = transforms.Compose([
 ])
 
 def get_meta(split=None):
-    if not os.path.exists('data/annotations/metadata.csv'):
+    if not os.path.exists('data/dynamic-annot/FileList.csv'):
         raise FileNotFoundError("Metadata file not found at 'data/annotations/metadata.csv'")
 
-    meta = pd.read_csv('data/annotations/metadata.csv')
+    meta = pd.read_csv('data/dynamic-annot/FileList.csv')
 
     if 'Split' not in meta.columns:
         raise ValueError("'Split' column not found in metadata.csv")

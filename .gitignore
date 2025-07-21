@@ -199,3 +199,5 @@ artifacts/*
 logs/*
 inference.db
 inference_feat.db
+/dynamic.csv
+dynamic.db

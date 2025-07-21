@@ -10,4 +10,5 @@ type PredictionRequest struct {
 	LengthRatio   		float64 `json:"length_ratio" binding:"required"`
 	DiceOverlapStd  	float64 `json:"dice_overlap_std" binding:"required"`
 	DiceOverlapRatio   	float64 `json:"dice_overlap_ratio" binding:"required"`
+	PredictedBias   	float64 `json:"predicted_bias" binding:"required"`
 }
